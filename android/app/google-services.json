@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1063297455736",
+    "project_id": "habitica-39b0b",
+    "storage_bucket": "habitica-39b0b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1063297455736:android:391361ed1e6a9d24887f8d",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCapqoqOhMpIO65kttXU983fAPwwNBUbgk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

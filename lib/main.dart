@@ -1,20 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart'; 
+import 'firebase_options.dart';
 
 import 'data/services/cat_fact_service.dart';
+import 'data/services/auth_service.dart';
 import 'data/repositories/cat_fact_repository.dart';
 import 'ui/viewmodels/cat_fact_viewmodel.dart';
-import 'ui/view/cat_fact_view.dart';
+import'ui/viewmodels/auth_viewmodel.dart';
+import 'ui/view/auth_wrapper.dart';
 
-void main() {
-  // 1. Инициализируем Data слой
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   final catFactService = CatFactService();
   final catFactRepository = CatFactRepository(catFactService);
+  final authService = AuthService();
 
-  // 2. Оборачиваем приложение в Provider, чтобы UI слой получил доступ к ViewModel
+  // получение доступа UI к ViewModel
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => CatFactViewModel(catFactRepository),
+    // MultiProvider для нескольких ViewModel
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => CatFactViewModel(catFactRepository),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => AuthViewModel(authService),
+        ),
+      ],
       child: const MyApp(),
     ),
   );
@@ -30,7 +47,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
       ),
-      home: const CatFactView(), // Показываем наш экран
+      home: const AuthWrapper(),
     );
   }
 }

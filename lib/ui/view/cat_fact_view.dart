@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/cat_fact_viewmodel.dart';
+import '../viewmodels/auth_viewmodel.dart';
 
 class CatFactView extends StatelessWidget {
   const CatFactView({super.key});
@@ -21,12 +22,15 @@ class CatFactView extends StatelessWidget {
             // Что делать при выборе пункта меню
             onSelected: (String value) {
               final vm = context.read<CatFactViewModel>();
+              final au_vm = context.read<AuthViewModel>();
               if (value == 'single') {
                 vm.getSingleFact();
               } else if (value == 'multiple') {
                 vm.getMultipleFacts();
               } else if (value == 'clear') {
                 vm.clearFacts();
+              } else if (value == 'logout') {
+                au_vm.logout();
               }
             },
             // Сами пункты выпадающего меню
@@ -39,11 +43,18 @@ class CatFactView extends StatelessWidget {
                 value: 'multiple',
                 child: Text('Несколько фактов'),
               ),
-              const PopupMenuDivider(), // Тонкая линия-разделитель для красоты
               const PopupMenuItem<String>(
                 value: 'clear',
                 child: Text(
                   'Очистить список', 
+                  style: TextStyle(color: Colors.red), // Сделаем текст красным
+                ),
+              ),
+              const PopupMenuDivider(), // Тонкая линия-разделитель для красоты
+              const PopupMenuItem<String>(
+                value: 'logout',
+                child: Text(
+                  'Выйти', 
                   style: TextStyle(color: Colors.red), // Сделаем текст красным
                 ),
               ),
