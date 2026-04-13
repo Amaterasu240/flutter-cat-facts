@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../viewmodels/auth_viewmodel.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../provider.dart';
 
-class LoginView extends StatefulWidget {
+class LoginView extends ConsumerStatefulWidget {
   const LoginView({super.key});
 
   @override
-  State<LoginView> createState() => _LoginViewState();
+  ConsumerState<LoginView> createState() => _LoginViewState();
 }
 
-class _LoginViewState extends State<LoginView> {
+class _LoginViewState extends ConsumerState<LoginView> {
   // Контроллеры для считывания текста из полей ввода
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -24,7 +24,8 @@ class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
     // Подключаемся к ViewModel
-    final viewModel = context.watch<AuthViewModel>();
+    final authState = ref.watch(authViewModelProvider);
+    final authNotifier = ref.watch(authViewModelProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Вход в приложение')),
@@ -54,23 +55,23 @@ class _LoginViewState extends State<LoginView> {
               const SizedBox(height: 16),
             
               // Если есть ошибка - показываем ее красным текстом
-              if (viewModel.errorMessage.isNotEmpty)
+              if (authState.errorMessage.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: Text(
-                    viewModel.errorMessage,
+                    authState.errorMessage,
                     style: const TextStyle(color: Colors.red),
                   ),
                 ),
 
               // Если идет загрузка - показываем спиннер, иначе - кнопки
-              viewModel.isLoading
+              authState.isLoading
                   ? const CircularProgressIndicator()
                   : Column(
                       children: [
                         ElevatedButton(
                           onPressed: () {
-                            viewModel.login(
+                            authNotifier.login(
                               _emailController.text.trim(),
                               _passwordController.text.trim(),
                             );
@@ -79,7 +80,7 @@ class _LoginViewState extends State<LoginView> {
                         ),
                         TextButton(
                           onPressed: () {
-                            viewModel.register(
+                            authNotifier.register(
                               _emailController.text.trim(),
                               _passwordController.text.trim(),
                             );

@@ -1,77 +1,63 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../data/services/auth_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../provider.dart';
 
-class AuthViewModel extends ChangeNotifier {
-  final AuthService _authService;
+class AuthState {
+  final bool isLoading;
+  final String errorMessage;
 
-  AuthViewModel(this._authService) {
-    // Как только ViewModel создается, мы начинаем слушать Firebase:
-    // Если юзер вошел - мы сохраняем его данные. Если вышел - обнуляем.
-    _authService.authStateChanges.listen((User? user) {
-      _user = user;
-      notifyListeners();
-    });
-  }
+  AuthState({this.isLoading = false, this.errorMessage = ''});
+}
 
-  User? _user;
-  bool get isAuthenticated => _user != null; 
-
-  bool isLoading = false; 
-  String errorMessage = ''; 
+class AuthViewModel extends Notifier<AuthState> {
+  
+  @override
+  AuthState build() => AuthState();
 
   // Функция для кнопки "Войти"
   Future<void> login(String email, String password) async {
-    isLoading = true;
-    errorMessage = '';
-    notifyListeners(); 
+    state = AuthState(isLoading: true, errorMessage: '');
 
     try {
-      await _authService.signIn(email, password);
+      final authService = ref.read(authServiceProvider);
+      await authService.signIn(email, password);
+      state = AuthState(isLoading: false, errorMessage: '');
     } on FirebaseAuthException catch (e) {
       if (e.code == 'invalid-credential') {
-        errorMessage = 'Неверный email или пароль. Проверьте данные или зарегистрируйтесь.';
+        state = AuthState(isLoading: false, errorMessage: 'Неверный email или пароль. Проверьте данные или зарегистрируйтесь.');
       } else if (e.code == 'invalid-email') {
-        errorMessage = 'Некорректный формат email.';
+        state = AuthState(isLoading: false, errorMessage: 'Некорректный формат email.');
       } else {
-        errorMessage = 'Произошла ошибка при входе';
+        state = AuthState(isLoading: false, errorMessage: 'Произошла ошибка при входе');
       }
     } catch (e) {
-      errorMessage = 'Неизвестная ошибка: $e';
-    } finally {
-      isLoading = false;
-      notifyListeners(); 
+      state = AuthState(isLoading: false, errorMessage: 'Неизвестная ошибка: $e');
     }
   }
 
   // Функция для кнопки "Зарегистрироваться"
   Future<void> register(String email, String password) async {
-    isLoading = true;
-    errorMessage = '';
-    notifyListeners();
+    state = AuthState(isLoading: true, errorMessage: '');
 
     try {
-      await _authService.register(email, password);
+      final authService = ref.read(authServiceProvider);
+      await authService.register(email, password);
+      state = AuthState(isLoading: false, errorMessage: '');
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {
-        errorMessage = 'Этот email уже зарегистрирован. Попробуйте войти.';
+        state = AuthState(isLoading: false, errorMessage: 'Этот email уже зарегистрирован. Попробуйте войти.');
       } else if (e.code == 'weak-password') {
-        errorMessage = 'Слишком слабый пароль (нужно минимум 6 символов).';
+        state = AuthState(isLoading: false, errorMessage: 'Слишком слабый пароль (нужно минимум 6 символов).');
       } else if (e.code == 'invalid-email') {
-        errorMessage = 'Некорректный формат email.';
+        state = AuthState(isLoading: false, errorMessage: 'Некорректный формат email.');
       } else {
-        errorMessage = 'Произошла ошибка при регистрации';
+        state = AuthState(isLoading: false, errorMessage: 'Произошла ошибка при регистрации');
       }
-    } catch (e) {
-      errorMessage = 'Неизвестная ошибка: $e';
-    } finally {
-      isLoading = false;
-      notifyListeners();
     }
   }
 
   // Функция для кнопки "Выйти"
   void logout() {
-    _authService.signOut();
+    ref.read(authServiceProvider).signOut();
   }
 }

@@ -1,56 +1,60 @@
-import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/cat_fact.dart';
-import '../../data/repositories/cat_fact_repository.dart';
+import '../../provider.dart';
 
-class CatFactViewModel extends ChangeNotifier {
-  final CatFactRepository _repository;
+class CatFactState {
+  List<CatFact> facts;
+  bool isLoading;
+  int numberOfFacts = 5;
 
-  CatFactViewModel(this._repository);
+  CatFactState({
+    this.facts = const [],
+    this.isLoading = false,
+    this.numberOfFacts = 5,
+  });
 
-  // Состояние нашего экрана
-  List<CatFact> facts = [];
-  bool isLoading = false;
+  CatFactState copyWith({
+    List<CatFact>? facts,
+    bool? isLoading,
+    int? numberOfFacts,
+  }) {
+    return CatFactState(
+      facts: facts ?? this.facts,
+      isLoading: isLoading ?? this.isLoading,
+      numberOfFacts: numberOfFacts ?? this.numberOfFacts,
+    );
+  }
+}
 
-  int numberOfFacts = 5; // Количество фактов для второй кнопки
+class CatFactViewModel extends Notifier<CatFactState> {
+
+  @override
+  CatFactState build() {
+    return CatFactState();
+  }
 
   void updateNumberOfFacts(double newValue) {
-    numberOfFacts = newValue.toInt();
-    notifyListeners();
+    state = state.copyWith(numberOfFacts: newValue.toInt());
   }
 
   // Логика первой кнопки
   Future<void> getSingleFact() async {
-    isLoading = true;
-    notifyListeners(); // Говорим экрану показать загрузку
+    state = state.copyWith(isLoading: true);
+    
+    final repository = ref.read(catFactRepositoryProvider);
+    final fact = await repository.fetchSingleFact();
+    state = state.copyWith(isLoading: false, facts: [fact]);
+  }
 
-    try {
-      final fact = await _repository.fetchSingleFact();
-      facts = [fact]; // Кладем в список один факт
-    } catch (e) {
-      facts = [CatFact(fact: 'Произошла ошибка')];
-    } finally {
-      isLoading = false;
-      notifyListeners(); // Говорим экрану перерисоваться с данными
-    }
+    // Логика второй кнопки
+  Future<void> getMultipleFacts() async {
+    state = state.copyWith(isLoading: true);
+    final repository = ref.read(catFactRepositoryProvider);
+    final facts = await repository.fetchMultipleFacts(state.numberOfFacts);
+    state = state.copyWith(isLoading: false, facts: facts);
   }
 
   void clearFacts() {
-    facts = []; // Опустошаем список
-    notifyListeners(); // Перерисовываем экран
-  }
-
-  // Логика второй кнопки
-  Future<void> getMultipleFacts() async {
-    isLoading = true;
-    notifyListeners();
-
-    try {
-      facts = await _repository.fetchMultipleFacts(numberOfFacts); // Получаем список
-    } catch (e) {
-      facts = [CatFact(fact: 'Произошла ошибка')];
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
+    state = state.copyWith(facts: []);
   }
 }

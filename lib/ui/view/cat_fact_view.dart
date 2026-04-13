@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../viewmodels/cat_fact_viewmodel.dart';
-import '../viewmodels/auth_viewmodel.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // НОВЫЙ ИМПОРТ RIVERPOD
+import '../../provider.dart';
 
-class CatFactView extends StatelessWidget {
+class CatFactView extends ConsumerWidget {
   const CatFactView({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Подключаемся к ViewModel
-    final viewModel = context.watch<CatFactViewModel>();
+    final viewModel = ref.watch(catFactViewModelProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -21,8 +20,8 @@ class CatFactView extends StatelessWidget {
             icon: const Icon(Icons.menu), 
             // Что делать при выборе пункта меню
             onSelected: (String value) {
-              final vm = context.read<CatFactViewModel>();
-              final au_vm = context.read<AuthViewModel>();
+              final vm = ref.read(catFactViewModelProvider.notifier);
+              final auVm = ref.read(authViewModelProvider.notifier);
               if (value == 'single') {
                 vm.getSingleFact();
               } else if (value == 'multiple') {
@@ -30,7 +29,7 @@ class CatFactView extends StatelessWidget {
               } else if (value == 'clear') {
                 vm.clearFacts();
               } else if (value == 'logout') {
-                au_vm.logout();
+                auVm.logout();
               }
             },
             // Сами пункты выпадающего меню
@@ -71,11 +70,11 @@ class CatFactView extends StatelessWidget {
               children: [
                 ElevatedButton(
                   // Дергаем метод из ViewModel без прослушивания (read)
-                  onPressed: () => context.read<CatFactViewModel>().getSingleFact(),
+                  onPressed: () => ref.read(catFactViewModelProvider.notifier).getSingleFact(),
                   child: const Text('Один факт'),
                 ),
                 ElevatedButton(
-                  onPressed: () => context.read<CatFactViewModel>().getMultipleFacts(),
+                  onPressed: () => ref.read(catFactViewModelProvider.notifier).getMultipleFacts(),
                   child: Text('Несколько (${viewModel.numberOfFacts})'),
                 ),
               ],
@@ -94,7 +93,7 @@ class CatFactView extends StatelessWidget {
             label: viewModel.numberOfFacts.toString(), // Всплывающая подсказка над ползунком
             onChanged: (double value) {
               // Вызываем метод изменения при движении
-              context.read<CatFactViewModel>().updateNumberOfFacts(value);
+              ref.read(catFactViewModelProvider.notifier).updateNumberOfFacts(value);
             },
           ),
           const Divider(), // Просто визуальная линия-разделитель
