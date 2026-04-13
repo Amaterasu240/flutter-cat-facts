@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // НОВЫЙ ИМПОРТ RIVERPOD
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dropdown_button2/dropdown_button2.dart'; 
+import 'package:flutter_screenutil/flutter_screenutil.dart'; 
 import '../../provider.dart';
 
 class CatFactView extends ConsumerWidget {
@@ -7,74 +9,99 @@ class CatFactView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Подключаемся к ViewModel
     final viewModel = ref.watch(catFactViewModelProvider);
+    
+    final catNotifier = ref.read(catFactViewModelProvider.notifier);
+    final authNotifier = ref.read(authViewModelProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Кошачьи факты'),
-        // НОВОЕ: actions - это элементы в правой части AppBar
+        title: Text('Кошачьи факты', style: TextStyle(fontSize: 20.sp)),
         actions: [
-          PopupMenuButton<String>(
-            // Задаем иконку "три полоски" (если убрать эту строчку, будут стандартные 3 точки)
-            icon: const Icon(Icons.menu), 
-            // Что делать при выборе пункта меню
-            onSelected: (String value) {
-              final vm = ref.read(catFactViewModelProvider.notifier);
-              final auVm = ref.read(authViewModelProvider.notifier);
-              if (value == 'single') {
-                vm.getSingleFact();
-              } else if (value == 'multiple') {
-                vm.getMultipleFacts();
-              } else if (value == 'clear') {
-                vm.clearFacts();
-              } else if (value == 'logout') {
-                auVm.logout();
-              }
-            },
-            // Сами пункты выпадающего меню
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(
-                value: 'single',
-                child: Text('Один факт'),
+          DropdownButtonHideUnderline(
+            child: DropdownButton2(
+              customButton: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: Icon(Icons.menu, size: 28.w),
               ),
-              const PopupMenuItem<String>(
-                value: 'multiple',
-                child: Text('Несколько фактов'),
-              ),
-              const PopupMenuItem<String>(
-                value: 'clear',
-                child: Text(
-                  'Очистить список', 
-                  style: TextStyle(color: Colors.red), // Сделаем текст красным
+              items: [
+                DropdownItem<String>(
+                  value: 'single',
+                  child: Row(
+                    children: [
+                      Icon(Icons.pets, size: 20.w, color: Colors.deepPurple),
+                      SizedBox(width: 10.w),
+                      Text('Один факт', style: TextStyle(fontSize: 14.sp)),
+                    ],
+                  ),
                 ),
-              ),
-              const PopupMenuDivider(), // Тонкая линия-разделитель для красоты
-              const PopupMenuItem<String>(
-                value: 'logout',
-                child: Text(
-                  'Выйти', 
-                  style: TextStyle(color: Colors.red), // Сделаем текст красным
+                DropdownItem<String>(
+                  value: 'multiple',
+                  child: Row(
+                    children: [
+                      Icon(Icons.reorder, size: 20.w, color: Colors.deepPurple),
+                      SizedBox(width: 10.w),
+                      Text('Несколько', style: TextStyle(fontSize: 14.sp)),
+                    ],
+                  ),
                 ),
+                DropdownItem<String>(
+                  value: 'clear',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline, size: 20.w, color: Colors.deepPurple),
+                      SizedBox(width: 10.w),
+                      Text('Очистить', style: TextStyle(fontSize: 14.sp)),
+                    ],
+                  ),
+                ),
+                const DropdownItem<String>(
+                  value: 'divider', 
+                  enabled: false,   
+                  child: Divider(),
+                ),
+                DropdownItem<String>(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      Icon(Icons.logout, size: 20.w, color: Colors.red),
+                      SizedBox(width: 10.w),
+                      Text('Выйти', style: TextStyle(fontSize: 14.sp, color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
+              onChanged: (value) {
+                if (value == 'single') catNotifier.getSingleFact();
+                if (value == 'multiple') catNotifier.getMultipleFacts();
+                if (value == 'clear') catNotifier.clearFacts();
+                if (value == 'logout') authNotifier.logout();
+              },
+              dropdownStyleData: DropdownStyleData(
+                width: 180.w,
+                padding: EdgeInsets.symmetric(vertical: 6.h),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12.r), 
+                ),
+                offset: const Offset(0, 0),
               ),
-            ],
+            ),
           ),
         ],
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(16.w),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                ElevatedButton(
-                  // Дергаем метод из ViewModel без прослушивания (read)
-                  onPressed: () => ref.read(catFactViewModelProvider.notifier).getSingleFact(),
+                FilledButton(
+                  onPressed: () => catNotifier.getSingleFact(),
                   child: const Text('Один факт'),
                 ),
-                ElevatedButton(
-                  onPressed: () => ref.read(catFactViewModelProvider.notifier).getMultipleFacts(),
+                FilledButton(
+                  onPressed: () => catNotifier.getMultipleFacts(),
                   child: Text('Несколько (${viewModel.numberOfFacts})'),
                 ),
               ],
@@ -83,22 +110,20 @@ class CatFactView extends ConsumerWidget {
 
           Text(
             'Количество фактов: ${viewModel.numberOfFacts}',
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.sp),
           ),
+          
           Slider(
-            value: viewModel.numberOfFacts.toDouble(), // Текущее значение
-            min: 2,                                    // Минимум
-            max: 15,                                   // Максимум
-            divisions: 13,                             // Шаги (15 - 2 = 13), чтобы ползунок прыгал только по целым числам
-            label: viewModel.numberOfFacts.toString(), // Всплывающая подсказка над ползунком
-            onChanged: (double value) {
-              // Вызываем метод изменения при движении
-              ref.read(catFactViewModelProvider.notifier).updateNumberOfFacts(value);
-            },
+            value: viewModel.numberOfFacts.toDouble(),
+            min: 2,
+            max: 15,
+            divisions: 13,
+            label: viewModel.numberOfFacts.toString(),
+            onChanged: (double value) => catNotifier.updateNumberOfFacts(value),
           ),
-          const Divider(), // Просто визуальная линия-разделитель
+          
+          const Divider(),
 
-          // Показываем индикатор или список фактов
           Expanded(
             child: viewModel.isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -106,10 +131,15 @@ class CatFactView extends ConsumerWidget {
                     itemCount: viewModel.facts.length,
                     itemBuilder: (context, index) {
                       return Card(
-                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                         child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Text(viewModel.facts[index].fact),
+                          padding: EdgeInsets.all(16.w),
+                          child: Text(
+                            viewModel.facts[index].fact,
+                            style: TextStyle(fontSize: 15.sp),
+                          ),
                         ),
                       );
                     },
